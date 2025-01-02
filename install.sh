@@ -23,7 +23,7 @@ show_step() {
 echo -e "${GREEN}开始安装 CosyVoice...${NC}"
 
 # 清理空间
-show_step "1/8" "清理系统空间"
+show_step "1/7" "清理系统空间"
 apt-get clean
 apt-get autoremove -y
 conda clean -a -y
@@ -61,7 +61,8 @@ if ! command -v conda &> /dev/null; then
     exit 1
 fi
 
-# 1. 克隆仓库
+# 克隆仓库
+show_step "2/7" "克隆仓库"
 if [ ! -d "CosyVoice" ]; then
     git clone --recursive https://github.com/FunAudioLLM/CosyVoice.git
     cd CosyVoice
@@ -71,14 +72,16 @@ else
     cd CosyVoice
 fi
 
-# 2. 安装系统依赖
+# 安装系统依赖
+show_step "3/7" "安装系统依赖"
 apt-get update
 if ! apt-get install -y sox libsox-dev; then
     echo -e "${RED}系统依赖安装失败${NC}"
     exit 1
 fi
 
-# 3. 创建并激活 conda 环境
+# 创建并激活 conda 环境
+show_step "4/7" "创建 conda 环境"
 if conda env list | grep -q "cosyvoice"; then
     echo -e "${YELLOW}conda 环境已存在，正在重新创建...${NC}"
     conda deactivate
@@ -97,37 +100,29 @@ fi
 
 # 初始化 conda
 conda init bash
-eval "$(conda shell.bash hook)"
+source ~/.bashrc
+# 确保 conda 命令生效
+hash -r
 
 conda create -n cosyvoice python=3.10 -y
 conda activate cosyvoice
 
-# 4. 安装 pynini (WeTextProcessing 需要)
-show_step "4/8" "安装 pynini"
-conda install -y -c conda-forge pynini==2.1.5
+# 安装依赖
+show_step "5/7" "安装依赖"
 
-# 5. 安装其他 Python 依赖
-show_step "5/8" "安装 Python 依赖"
-
-# 检查 requirements.txt 是否存在
-if [ ! -f "requirements.txt" ]; then
-    echo -e "${RED}找不到 requirements.txt${NC}"
-    exit 1
-fi
-
-# 先安装 PyTorch
-conda install -y pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
-
-# 安装基础依赖
-echo -e "${GREEN}安装基础依赖...${NC}"
+# 先安装基础依赖
 conda install -y numpy scipy pandas scikit-learn matplotlib -c conda-forge
 
+# 再安装 PyTorch
+conda install -y pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+
+# 安装 pynini (WeTextProcessing 需要)
+conda install -y -c conda-forge pynini==2.1.5
+
 # 安装 modelscope
-echo -e "${GREEN}安装 modelscope...${NC}"
 pip install modelscope -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host=mirrors.aliyun.com
 
 # 分步安装关键依赖
-echo -e "${GREEN}安装关键依赖...${NC}"
 if ! pip install -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host=mirrors.aliyun.com \
     gradio==4.32.2 \
     librosa==0.10.2 \
@@ -136,19 +131,18 @@ if ! pip install -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host=mirro
     tensorboard==2.14.0 \
     omegaconf==2.3.0 \
     hydra-core==1.3.2; then
-    echo -e "${RED}Python 依赖安装失败${NC}"
+    echo -e "${RED}关键依赖安装失败${NC}"
     exit 1
 fi
 
 # 确保所有依赖都被正确安装
-echo -e "${GREEN}确保所有依赖完整性...${NC}"
 if ! pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host=mirrors.aliyun.com; then
     echo -e "${RED}依赖完整性检查失败${NC}"
     exit 1
 fi
 
-# 6. 下载模型
-show_step "6/8" "下载模型"
+# 下载模型
+show_step "6/7" "下载模型"
 mkdir -p pretrained_models
 python3 -c "
 from modelscope import snapshot_download
@@ -172,7 +166,7 @@ except Exception as e:
 "
 
 # 验证安装
-show_step "8/8" "验证安装"
+show_step "7/7" "验证安装"
 python3 -c "
 try:
     import torch
