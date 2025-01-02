@@ -78,36 +78,18 @@ conda create -n cosyvoice python=3.10 -y
 eval "$(conda shell.bash hook)"
 conda activate cosyvoice
 
-# 安装CUDA相关包
-echo -e "${GREEN}安装CUDA相关包...${NC}"
-conda install -y pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+# 安装所有依赖
+echo -e "${GREEN}安装所有依赖...${NC}"
 
-# 安装pynini
-echo -e "${GREEN}安装pynini...${NC}"
+# 1. 系统依赖
+apt-get update
+apt-get install -y sudo sox libsox-dev
+
+# 2. Conda 依赖
 conda install -y -c conda-forge pynini==2.1.5
 
-# 安装依赖
-echo -e "${GREEN}安装Python依赖...${NC}"
+# 3. Python 依赖
 pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host=mirrors.aliyun.com
-
-# 检测系统类型并安装系统依赖
-if [ -f /etc/os-release ]; then
-    . /etc/os-release
-    case $ID in
-        ubuntu|debian)
-            echo -e "${GREEN}安装Ubuntu/Debian系统依赖...${NC}"
-            sudo apt-get update
-            sudo apt-get install -y sox libsox-dev
-            ;;
-        centos|rhel|fedora)
-            echo -e "${GREEN}安装CentOS/RHEL系统依赖...${NC}"
-            sudo yum install -y sox sox-devel
-            ;;
-        *)
-            echo -e "${RED}未识别的操作系统，请手动安装sox和sox-devel${NC}"
-            ;;
-    esac
-fi
 
 # 创建模型目录
 mkdir -p pretrained_models
@@ -149,6 +131,10 @@ python download_models.py
 
 # 安装ttsfrd
 echo -e "${GREEN}安装ttsfrd...${NC}"
+if [ ! -d "pretrained_models/CosyVoice-ttsfrd" ]; then
+    echo -e "${RED}等待模型下载完成...${NC}"
+    exit 1
+fi
 cd pretrained_models/CosyVoice-ttsfrd/
 unzip resource.zip -d .
 pip install ttsfrd_dependency-0.1-py3-none-any.whl
@@ -160,9 +146,58 @@ cd ../../
 echo -e "${GREEN}验证PyTorch GPU支持...${NC}"
 python3 -c "import torch; print('GPU可用：', torch.cuda.is_available()); print('GPU数量：', torch.cuda.device_count()); print('GPU名称：', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'None')"
 
+# 检查关键依赖是否安装成功
+echo -e "${GREEN}检查关键依赖...${NC}"
+python3 -c "
+try:
+    import torch
+    import gradio
+    import librosa
+    import modelscope
+    import transformers
+    import numpy
+    import scipy
+    import pandas
+    import nltk
+    import pypinyin
+    import zhconv
+    import unidecode
+    import tensorrt
+    import pynini
+    import deepspeed
+    import onnxruntime
+    import conformer
+    import diffusers
+    import hydra
+    import omegaconf
+    import lightning
+    print('检查PyTorch CUDA是否可用:', torch.cuda.is_available())
+    print('检查CUDA版本:', torch.version.cuda)
+    print('${GREEN}所有关键依赖检查通过！${NC}')
+except ImportError as e:
+    print('${RED}依赖检查失败：', str(e), '${NC}')
+    exit(1)
+except Exception as e:
+    print('${RED}其他错误：', str(e), '${NC}')
+    exit(1)
+"
+
 echo -e "${GREEN}安装完成！${NC}"
+
+# 切换到正确的目录
+cd /workspace/CosyVoice
+
 echo -e "${GREEN}使用以下命令启动Web界面：${NC}"
 echo -e "${GREEN}conda activate cosyvoice${NC}"
+echo -e "${GREEN}cd /workspace/CosyVoice  # 确保在正确的目录下${NC}"
 echo -e "${GREEN}python3 webui.py --port 50000 --model_dir pretrained_models/CosyVoice-300M${NC}"
+
+# 检查webui.py是否存在
+if [ ! -f "webui.py" ]; then
+    echo -e "${RED}错误: webui.py 文件不存在${NC}"
+    echo -e "${YELLOW}请确保您在 CosyVoice 目录下：${NC}"
+    echo -e "${YELLOW}cd /workspace/CosyVoice${NC}"
+    exit 1
+fi
 
 echo "安装结束时间: $(date)" >> "$LOG_FILE" 
