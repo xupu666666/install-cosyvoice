@@ -28,11 +28,11 @@ if ! command -v nvidia-smi &> /dev/null; then
     exit 1
 fi
 
-CUDA_VERSION=$(nvidia-smi --query-gpu=cuda_version --format=csv,noheader | head -n 1)
+CUDA_VERSION=$(nvidia-smi | grep "CUDA Version" | awk '{print $9}' | cut -d'.' -f1)
 echo -e "${GREEN}检测到CUDA版本: ${CUDA_VERSION}${NC}"
 
 # 检查CUDA版本是否满足要求
-if [ "${CUDA_VERSION}" \< "12.0" ]; then
+if [ "${CUDA_VERSION}" -lt "12" ]; then
     echo -e "${RED}CUDA版本过低，CosyVoice需要CUDA 12.0或更高版本${NC}"
     echo -e "${YELLOW}当前CUDA版本: ${CUDA_VERSION}${NC}"
     exit 1
@@ -50,11 +50,7 @@ FREE_SPACE=$(df -h . | awk 'NR==2 {print $4}' | sed 's/G//')
 if [ "${FREE_SPACE%.*}" -lt 50 ]; then
     echo -e "${RED}警告: 可用磁盘空间不足50GB${NC}"
     echo -e "${YELLOW}当前可用空间: ${FREE_SPACE}GB${NC}"
-    read -p "是否继续安装？(y/n) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        exit 1
-    fi
+    echo -e "${YELLOW}继续安装...${NC}"
 fi
 
 # 克隆仓库
@@ -169,4 +165,4 @@ echo -e "${GREEN}使用以下命令启动Web界面：${NC}"
 echo -e "${GREEN}conda activate cosyvoice${NC}"
 echo -e "${GREEN}python3 webui.py --port 50000 --model_dir pretrained_models/CosyVoice-300M${NC}"
 
-echo "安装结束时间: $(date)" >> "$LOG_FILE"
+echo "安装结束时间: $(date)" >> "$LOG_FILE" 
