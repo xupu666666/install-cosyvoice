@@ -97,18 +97,17 @@ fi
 
 # 初始化 conda
 conda init bash
-# 确保 conda 命令可用
 eval "$(conda shell.bash hook)"
 
 conda create -n cosyvoice python=3.10 -y
 conda activate cosyvoice
 
 # 4. 安装 pynini (WeTextProcessing 需要)
-echo -e "${GREEN}安装 pynini...${NC}"
+show_step "4/8" "安装 pynini"
 conda install -y -c conda-forge pynini==2.1.5
 
 # 5. 安装其他 Python 依赖
-echo -e "${GREEN}安装 Python 依赖...${NC}"
+show_step "5/8" "安装 Python 依赖"
 
 # 检查 requirements.txt 是否存在
 if [ ! -f "requirements.txt" ]; then
@@ -149,7 +148,7 @@ if ! pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ 
 fi
 
 # 6. 下载模型
-echo -e "${GREEN}下载模型...${NC}"
+show_step "6/8" "下载模型"
 mkdir -p pretrained_models
 python3 -c "
 from modelscope import snapshot_download
@@ -215,4 +214,6 @@ except Exception as e:
 echo -e "${GREEN}安装完成！${NC}"
 echo -e "${GREEN}使用以下命令启动Web界面：${NC}"
 echo -e "${GREEN}conda activate cosyvoice${NC}"
-echo -e "${GREEN}python3 webui.py --port 50000 --model_dir pretrained_models/CosyVoice-300M${NC}" 
+echo -e "${GREEN}python3 webui.py --port 50000 --model_dir pretrained_models/CosyVoice-300M${NC}"
+
+echo "安装结束时间: $(date)" >> "$LOG_FILE"
