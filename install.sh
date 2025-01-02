@@ -169,4 +169,4 @@ echo -e "${GREEN}使用以下命令启动Web界面：${NC}"
 echo -e "${GREEN}conda activate cosyvoice${NC}"
 echo -e "${GREEN}python3 webui.py --port 50000 --model_dir pretrained_models/CosyVoice-300M${NC}"
 
-echo "安装结束时间: $(date)" >> "$LOG_FILE" 
+echo "安装结束时间: $(date)" >> "$LOG_FILE"
