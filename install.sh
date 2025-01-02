@@ -13,12 +13,6 @@ exec 1> >(tee -a "$LOG_FILE") 2>&1
 echo -e "${GREEN}开始安装 CosyVoice...${NC}"
 echo "安装开始时间: $(date)"
 
-# 检查是否为root用户
-if [ "$EUID" -eq 0 ]; then 
-    echo -e "${RED}请不要使用root用户运行此脚本${NC}"
-    exit 1
-fi
-
 # 检查系统要求
 echo -e "${GREEN}检查系统要求...${NC}"
 if ! command -v git &> /dev/null; then
@@ -175,4 +169,4 @@ echo -e "${GREEN}使用以下命令启动Web界面：${NC}"
 echo -e "${GREEN}conda activate cosyvoice${NC}"
 echo -e "${GREEN}python3 webui.py --port 50000 --model_dir pretrained_models/CosyVoice-300M${NC}"
 
-echo "安装结束时间: $(date)" >> "$LOG_FILE"
+echo "安装结束时间: $(date)" >> "$LOG_FILE" 
